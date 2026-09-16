@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -75,9 +74,9 @@ export function NotificationBell() {
           {(data ?? []).map((n) => (
             <li key={n.id} className={`border-b px-4 py-3 text-sm ${n.lida ? "opacity-60" : ""}`}>
               {n.link ? (
-                <Link to={n.link} className="hover:text-primary">
+                <a href={n.link} className="hover:text-primary">
                   {n.mensagem}
-                </Link>
+                </a>
               ) : (
                 n.mensagem
               )}

@@ -1,5 +1,13 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789580152422,
+      "tag": "0000_ludy_tech_shop_schema",
+      "breakpoints": true
+    }
+  ]
 }

@@ -424,7 +424,7 @@ function Produtos() {
         <div>
           <Label>Categoria</Label>
           <Select
-            value={form.categoria_id || undefined}
+            value={form.categoria_id}
             onValueChange={(v) => setForm({ ...form, categoria_id: v })}
           >
             <SelectTrigger className="mt-1.5">

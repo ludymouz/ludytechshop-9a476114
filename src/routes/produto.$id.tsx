@@ -1,0 +1,297 @@
+import * as React from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Heart, Minus, Plus, ShoppingCart, Star } from "lucide-react";
+import { toast } from "sonner";
+
+import { ShopLayout } from "@/components/shop/ShopLayout";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
+import { useCart } from "@/lib/cart";
+import { useFavoritos } from "@/lib/favoritos";
+import { useI18n } from "@/lib/i18n";
+import { avaliacoesQuery, produtoQuery } from "@/lib/shop-queries";
+import { effectivePrice, formatKz } from "@/lib/shop-config";
+
+export const Route = createFileRoute("/produto/$id")({
+  head: () => ({
+    meta: [
+      { title: "Produto — Ludy Tech Shop" },
+      {
+        name: "description",
+        content: "Detalhes do produto, fotos, preço em Kwanza, stock e avaliações de clientes.",
+      },
+      { property: "og:title", content: "Produto — Ludy Tech Shop" },
+      { property: "og:description", content: "Fotos, preço em Kwanza, stock e avaliações." },
+    ],
+  }),
+  component: ProdutoDetalhe,
+});
+
+function Estrelas({ n, onSelect }: { n: number; onSelect?: (v: number) => void }) {
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((v) => (
+        <button
+          key={v}
+          type="button"
+          disabled={!onSelect}
+          onClick={() => onSelect?.(v)}
+          aria-label={`${v}`}
+          className={onSelect ? "cursor-pointer" : "cursor-default"}
+        >
+          <Star className={`size-4 ${v <= n ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ProdutoDetalhe() {
+  const { id } = Route.useParams();
+  const { t } = useI18n();
+  const { user } = useAuth();
+  const { add, setOpen } = useCart();
+  const { isFavorito, toggle } = useFavoritos();
+  const qc = useQueryClient();
+
+  const { data: produto, isLoading } = useQuery(produtoQuery(id));
+  const { data: avaliacoes } = useQuery(avaliacoesQuery(id));
+  const [qty, setQty] = React.useState(1);
+  const [estrelas, setEstrelas] = React.useState(5);
+  const [comentario, setComentario] = React.useState("");
+  const [foto, setFoto] = React.useState(0);
+
+  const enviar = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error(t("need_login"));
+      const { error } = await supabase.from("avaliacoes").upsert(
+        {
+          user_id: user.id,
+          produto_id: id,
+          autor: user.email?.split("@")[0] ?? "Cliente",
+          estrelas,
+          comentario: comentario.trim() || null,
+        },
+        { onConflict: "user_id,produto_id" },
+      );
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      setComentario("");
+      toast.success("Obrigado pela avaliação!");
+      qc.invalidateQueries({ queryKey: ["avaliacoes", id] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Erro"),
+  });
+
+  if (isLoading) {
+    return (
+      <ShopLayout>
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 lg:grid-cols-2">
+          <Skeleton className="aspect-square rounded-3xl" />
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-2/3" />
+            <Skeleton className="h-6 w-1/3" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+        </div>
+      </ShopLayout>
+    );
+  }
+
+  if (!produto) {
+    return (
+      <ShopLayout>
+        <div className="mx-auto max-w-2xl px-4 py-24 text-center">
+          <p className="font-display text-2xl font-bold">{t("no_products")}</p>
+          <Button asChild className="mt-6">
+            <Link to="/produtos" search={{ q: undefined, cat: undefined }}>
+              {t("products")}
+            </Link>
+          </Button>
+        </div>
+      </ShopLayout>
+    );
+  }
+
+  const galeria = [
+    produto.imagem_url,
+    ...(Array.isArray(produto.imagens) ? (produto.imagens as string[]) : []),
+  ].filter(Boolean) as string[];
+  const preco = effectivePrice(produto);
+  const esgotado = produto.stock <= 0;
+  const media =
+    (avaliacoes ?? []).length > 0
+      ? (avaliacoes ?? []).reduce((s, a) => s + a.estrelas, 0) / (avaliacoes ?? []).length
+      : 0;
+
+  return (
+    <ShopLayout>
+      <div className="mx-auto max-w-7xl px-4 py-8">
+        <Link
+          to="/produtos"
+          search={{ q: undefined, cat: undefined }}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-primary"
+        >
+          <ArrowLeft className="size-4" /> {t("back")}
+        </Link>
+
+        <div className="mt-6 grid gap-10 lg:grid-cols-2">
+          <div>
+            <div className="aspect-square overflow-hidden rounded-3xl border bg-muted">
+              {galeria[foto] ? (
+                <img src={galeria[foto]} alt={produto.nome} className="size-full object-cover" />
+              ) : (
+                <div className="grid size-full place-items-center text-6xl">📦</div>
+              )}
+            </div>
+            {galeria.length > 1 && (
+              <div className="mt-3 flex gap-2">
+                {galeria.map((g, i) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setFoto(i)}
+                    className={`size-16 overflow-hidden rounded-xl border-2 ${
+                      i === foto ? "border-primary" : "border-transparent"
+                    }`}
+                  >
+                    <img src={g} alt="" className="size-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h1 className="font-display text-2xl font-black leading-tight sm:text-3xl">
+              {produto.nome}
+            </h1>
+            <div className="mt-2 flex items-center gap-2">
+              <Estrelas n={Math.round(media)} />
+              <span className="text-xs text-muted-foreground">
+                {(avaliacoes ?? []).length} {t("reviews").toLowerCase()}
+              </span>
+            </div>
+
+            <div className="mt-5 flex items-baseline gap-3">
+              <span className="font-display text-3xl font-black text-primary">{formatKz(preco)}</span>
+              {produto.em_promocao && produto.preco_promo != null && (
+                <span className="text-base text-muted-foreground line-through">
+                  {formatKz(produto.preco)}
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {esgotado ? t("out_of_stock") : `${produto.stock} ${t("in_stock")}`}
+            </p>
+
+            {produto.descricao && (
+              <div className="mt-6">
+                <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
+                  {t("description")}
+                </p>
+                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{produto.descricao}</p>
+              </div>
+            )}
+
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 rounded-full border px-2 py-1">
+                <Button size="icon" variant="ghost" className="size-8" onClick={() => setQty(Math.max(1, qty - 1))}>
+                  <Minus className="size-4" />
+                </Button>
+                <span className="w-8 text-center font-semibold">{qty}</span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-8"
+                  onClick={() => setQty(Math.min(produto.stock || 1, qty + 1))}
+                >
+                  <Plus className="size-4" />
+                </Button>
+              </div>
+
+              <Button
+                size="lg"
+                className="font-semibold"
+                disabled={esgotado}
+                onClick={() => {
+                  add(
+                    {
+                      id: produto.id,
+                      nome: produto.nome,
+                      preco,
+                      imagem_url: produto.imagem_url,
+                      stock: produto.stock,
+                    },
+                    qty,
+                  );
+                  setOpen(true);
+                }}
+              >
+                <ShoppingCart className="size-4" /> {t("add_cart")}
+              </Button>
+
+              <Button size="lg" variant="outline" onClick={() => toggle(produto.id)}>
+                <Heart className={`size-4 ${isFavorito(produto.id) ? "fill-primary text-primary" : ""}`} />
+                {t("favorites")}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <section className="mt-16 max-w-3xl">
+          <h2 className="font-display text-xl font-bold">{t("reviews")}</h2>
+
+          {user ? (
+            <div className="mt-4 rounded-2xl border p-4">
+              <p className="text-sm font-semibold">{t("write_review")}</p>
+              <div className="mt-2">
+                <Estrelas n={estrelas} onSelect={setEstrelas} />
+              </div>
+              <Textarea
+                className="mt-3"
+                rows={3}
+                placeholder={t("your_comment")}
+                value={comentario}
+                onChange={(e) => setComentario(e.target.value)}
+              />
+              <Button className="mt-3" disabled={enviar.isPending} onClick={() => enviar.mutate()}>
+                {t("send")}
+              </Button>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-muted-foreground">
+              {t("need_login")}{" "}
+              <Link to="/auth" className="font-semibold text-primary hover:underline">
+                {t("login")}
+              </Link>
+            </p>
+          )}
+
+          <ul className="mt-6 space-y-4">
+            {(avaliacoes ?? []).length === 0 && (
+              <li className="text-sm text-muted-foreground">{t("no_reviews")}</li>
+            )}
+            {(avaliacoes ?? []).map((a) => (
+              <li key={a.id} className="rounded-2xl border p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">{a.autor || "Cliente"}</span>
+                  <Estrelas n={a.estrelas} />
+                </div>
+                {a.comentario && <p className="mt-2 text-sm">{a.comentario}</p>}
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  {new Date(a.criado_em).toLocaleDateString("pt-PT")}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    </ShopLayout>
+  );
+}

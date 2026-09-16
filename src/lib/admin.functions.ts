@@ -93,8 +93,9 @@ export const adminUploadImage = createServerFn({ method: "POST" })
     const db = await admin();
     const match = /^data:([^;]+);base64,(.+)$/.exec(data.dataUrl);
     if (!match) throw new Error("Imagem inválida");
-    const [, mime, b64] = match;
-    const bytes = Buffer.from(b64!, "base64");
+    const mime = match[1] ?? "image/jpeg";
+    const b64 = match[2];
+    const bytes = Buffer.from(b64 ?? "", "base64");
     const ext = (data.filename.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
     const path = `${crypto.randomUUID()}.${ext}`;
     const { error } = await db.storage.from("loja").upload(path, bytes, { contentType: mime, upsert: false });
@@ -117,13 +118,13 @@ export const adminListProdutos = createServerFn({ method: "GET" }).handler(async
 const produtoSchema = z.object({
   id: z.string().optional(),
   nome: z.string().min(1),
-  descricao: z.string().nullable().optional(),
+  descricao: z.string().nullable().default(null),
   preco: z.number().nonnegative(),
-  preco_promo: z.number().nullable().optional(),
+  preco_promo: z.number().nullable().default(null),
   em_promocao: z.boolean(),
   stock: z.number().int().nonnegative(),
-  imagem_url: z.string().nullable().optional(),
-  categoria_id: z.string().nullable().optional(),
+  imagem_url: z.string().nullable().default(null),
+  categoria_id: z.string().nullable().default(null),
   ativo: z.boolean().default(true),
 });
 
@@ -266,10 +267,10 @@ export const adminSaveBanner = createServerFn({ method: "POST" })
     z
       .object({
         id: z.string().optional(),
-        titulo: z.string().nullable().optional(),
-        subtitulo: z.string().nullable().optional(),
-        imagem_url: z.string().nullable().optional(),
-        link: z.string().nullable().optional(),
+        titulo: z.string().nullable().default(null),
+        subtitulo: z.string().nullable().default(null),
+        imagem_url: z.string().nullable().default(null),
+        link: z.string().nullable().default(null),
         ativo: z.boolean().default(true),
         ordem: z.number().int().default(0),
       })

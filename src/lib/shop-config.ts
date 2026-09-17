@@ -1,5 +1,6 @@
 export const SHOP = {
   name: "Ludy Tech Shop",
+  email: "ludytechshop@gmail.com",
   phone: "244949148512",
   phoneDisplay: "+244 949 148 512",
   addressPt: "Uíge, Bairro Dunga, Rua B",
@@ -9,10 +10,8 @@ export const SHOP = {
   payCloseWeekday: "16:00",
   payCloseWeekend: "14:00",
   social: {
-    facebook: "https://facebook.com",
-    instagram: "https://instagram.com",
-    tiktok: "https://tiktok.com",
-    youtube: "https://youtube.com",
+    instagram: "https://www.instagram.com/ludytechshop/",
+    tiktok: "https://www.tiktok.com/@ludytechshop",
   },
 } as const;
 

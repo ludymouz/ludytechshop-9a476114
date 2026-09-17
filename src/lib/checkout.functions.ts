@@ -11,6 +11,13 @@ const schema = z.object({
   nome_cliente: z.string().min(1),
   telefone: z.string().optional().nullable(),
   morada: z.string().optional().nullable(),
+  localizacao_url: z
+    .string()
+    .url()
+    .max(200)
+    .refine((value) => value.startsWith("https://maps.google.com/?q="), "Localização inválida")
+    .optional()
+    .nullable(),
 });
 
 const TAXA_ENTREGA = 600;
@@ -52,6 +59,7 @@ export const criarPedido = createServerFn({ method: "POST" })
         nome_cliente: data.nome_cliente,
         telefone: data.telefone ?? null,
         morada: data.morada ?? null,
+        localizacao_url: data.tipo_entrega === "entrega" ? (data.localizacao_url ?? null) : null,
         subtotal,
         taxa_entrega: taxa,
         total,

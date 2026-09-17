@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -65,12 +66,17 @@ function Perfil() {
 
   const guardar = useMutation({
     mutationFn: async (fd: FormData) => {
+      const telefone = String(fd.get("telefone") ?? "").trim();
+      if (telefone && !/^9\d{8}$/.test(telefone)) {
+        throw new Error(t("invalid_phone" as any));
+      }
+
       const { error } = await supabase
         .from("profiles")
         .update({
           nome_completo: String(fd.get("nome_completo") ?? ""),
           username: String(fd.get("username") ?? "") || null,
-          telefone: String(fd.get("telefone") ?? "") || null,
+          telefone: telefone || null,
           morada: String(fd.get("morada") ?? "") || null,
           genero: String(fd.get("genero") ?? "") || null,
           idade: Number(fd.get("idade")) || null,
@@ -133,15 +139,39 @@ function Perfil() {
               </div>
               <div>
                 <Label htmlFor="telefone">{t("phone")}</Label>
-                <Input id="telefone" name="telefone" defaultValue={perfil?.telefone ?? ""} className="mt-1.5" />
+                <div className="relative mt-1.5">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">+244</span>
+                  <Input
+                    id="telefone"
+                    name="telefone"
+                    defaultValue={perfil?.telefone ?? ""}
+                    className="pl-12"
+                    placeholder="9xx xxx xxx"
+                    maxLength={9}
+                    pattern="9[0-9]{8}"
+                  />
+                </div>
               </div>
               <div className="sm:col-span-2">
                 <Label htmlFor="morada">{t("address")}</Label>
                 <Input id="morada" name="morada" defaultValue={perfil?.morada ?? ""} className="mt-1.5" />
               </div>
-              <div>
-                <Label htmlFor="genero">{t("gender")}</Label>
-                <Input id="genero" name="genero" defaultValue={perfil?.genero ?? ""} className="mt-1.5" />
+              <div className="space-y-2">
+                <Label>{t("gender")}</Label>
+                <RadioGroup name="genero" defaultValue={perfil?.genero || "other"} className="flex flex-col gap-2 mt-1.5">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="male" id="male" />
+                    <Label htmlFor="male" className="font-normal cursor-pointer">{t("male" as any)}</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="female" id="female" />
+                    <Label htmlFor="female" className="font-normal cursor-pointer">{t("female" as any)}</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="other" id="other" />
+                    <Label htmlFor="other" className="font-normal cursor-pointer">{t("other_gender" as any)}</Label>
+                  </div>
+                </RadioGroup>
               </div>
               <div>
                 <Label htmlFor="idade">{t("age")}</Label>

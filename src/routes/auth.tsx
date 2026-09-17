@@ -6,6 +6,7 @@ import { ShopLayout } from "@/components/shop/ShopLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -32,6 +33,11 @@ function AuthPage() {
   const navigate = useNavigate();
   const [modo, setModo] = React.useState<"login" | "registo">("login");
   const [loading, setLoading] = React.useState(false);
+  const [captcha, setCaptcha] = React.useState({ a: 3, b: 4 });
+
+  React.useEffect(() => {
+    setCaptcha({ a: Math.floor(Math.random() * 8) + 1, b: Math.floor(Math.random() * 8) + 1 });
+  }, []);
 
   React.useEffect(() => {
     if (user) navigate({ to: "/perfil" });
@@ -42,6 +48,23 @@ function AuthPage() {
     const fd = new FormData(e.currentTarget);
     const email = String(fd.get("email") ?? "").trim();
     const password = String(fd.get("password") ?? "");
+    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email);
+    if (!emailValido) {
+      toast.error(t("invalid_email"));
+      return;
+    }
+    if (modo === "registo") {
+      const telefone = String(fd.get("telefone") ?? "").trim();
+      if (!/^9\d{8}$/.test(telefone)) {
+        toast.error(t("invalid_phone"));
+        return;
+      }
+      if (Number(fd.get("captcha")) !== captcha.a + captcha.b) {
+        toast.error(t("captcha_error"));
+        setCaptcha({ a: Math.floor(Math.random() * 8) + 1, b: Math.floor(Math.random() * 8) + 1 });
+        return;
+      }
+    }
     setLoading(true);
     try {
       if (modo === "login") {
@@ -99,36 +122,70 @@ function AuthPage() {
                 <Label htmlFor="nome_completo">{t("full_name")}</Label>
                 <Input id="nome_completo" name="nome_completo" required className="mt-1.5" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <Label htmlFor="username">{t("username")}</Label>
                   <Input id="username" name="username" className="mt-1.5" />
                 </div>
                 <div>
                   <Label htmlFor="telefone">{t("phone")}</Label>
-                  <Input id="telefone" name="telefone" className="mt-1.5" placeholder="9xx xxx xxx" />
+                  <div className="relative mt-1.5">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">+244</span>
+                    <Input
+                      id="telefone"
+                      name="telefone"
+                      inputMode="numeric"
+                      autoComplete="tel-national"
+                      required
+                      minLength={9}
+                      maxLength={9}
+                      pattern="9[0-9]{8}"
+                      className="pl-12"
+                      placeholder="9xx xxx xxx"
+                      onInput={(e) => {
+                        e.currentTarget.value = e.currentTarget.value.replace(/\D/g, "").slice(0, 9);
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
               <div>
                 <Label htmlFor="morada">{t("address")}</Label>
                 <Input id="morada" name="morada" className="mt-1.5" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="genero">{t("gender")}</Label>
-                  <Input id="genero" name="genero" className="mt-1.5" />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>{t("gender")}</Label>
+                  <RadioGroup name="genero" defaultValue="other" className="flex flex-wrap gap-4 pt-1">
+                    {[
+                      ["male", t("male")],
+                      ["female", t("female")],
+                      ["other", t("other_gender")],
+                    ].map(([value, label]) => (
+                      <div key={value} className="flex items-center gap-2">
+                        <RadioGroupItem value={value} id={`reg-${value}`} />
+                        <Label htmlFor={`reg-${value}`} className="cursor-pointer font-normal">{label}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
                 </div>
                 <div>
                   <Label htmlFor="idade">{t("age")}</Label>
                   <Input id="idade" name="idade" type="number" min={0} className="mt-1.5" />
                 </div>
               </div>
+              <div className="rounded-lg border bg-muted/40 p-4">
+                <Label htmlFor="captcha">
+                  {lang === "pt" ? "Confirma que és humano" : "Confirm you are human"}: {captcha.a} + {captcha.b} = ?
+                </Label>
+                <Input id="captcha" name="captcha" type="number" inputMode="numeric" required className="mt-2" />
+              </div>
             </>
           )}
 
           <div>
             <Label htmlFor="email">{t("email")}</Label>
-            <Input id="email" name="email" type="email" required className="mt-1.5" />
+            <Input id="email" name="email" type="email" autoComplete="email" required maxLength={254} className="mt-1.5" />
           </div>
           <div>
             <Label htmlFor="password">{t("password")}</Label>

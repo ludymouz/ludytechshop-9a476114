@@ -238,6 +238,7 @@ export type Database = {
           criado_em: string
           estado: string
           id: string
+          localizacao_url: string | null
           metodo_pag: string
           morada: string | null
           nome_cliente: string
@@ -253,6 +254,7 @@ export type Database = {
           criado_em?: string
           estado?: string
           id?: string
+          localizacao_url?: string | null
           metodo_pag: string
           morada?: string | null
           nome_cliente?: string
@@ -268,6 +270,7 @@ export type Database = {
           criado_em?: string
           estado?: string
           id?: string
+          localizacao_url?: string | null
           metodo_pag?: string
           morada?: string | null
           nome_cliente?: string

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import { CheckCircle2, Loader2, LocateFixed, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,8 @@ export function CartDrawer() {
   const [pagamento, setPagamento] = React.useState<string>(PAYMENT_METHODS[0].value);
   const [entrega, setEntrega] = React.useState<"entrega" | "levantamento">("entrega");
   const [enviando, setEnviando] = React.useState(false);
+  const [localizando, setLocalizando] = React.useState(false);
+  const [localizacaoUrl, setLocalizacaoUrl] = React.useState<string | null>(null);
   const [janela, setJanela] = React.useState(() => paymentWindow());
 
   React.useEffect(() => {
@@ -32,6 +34,28 @@ export function CartDrawer() {
 
   const taxa = entrega === "entrega" ? SHOP.deliveryFee : 0;
   const total = subtotal + taxa;
+
+  function obterLocalizacao() {
+    if (!("geolocation" in navigator)) {
+      toast.error(lang === "pt" ? "O GPS não está disponível neste dispositivo." : "GPS is not available on this device.");
+      return;
+    }
+    setLocalizando(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const lat = coords.latitude.toFixed(7);
+        const lng = coords.longitude.toFixed(7);
+        setLocalizacaoUrl(`https://maps.google.com/?q=${lat},${lng}`);
+        setLocalizando(false);
+        toast.success(lang === "pt" ? "Localização adicionada à encomenda." : "Location added to your order.");
+      },
+      () => {
+        setLocalizando(false);
+        toast.error(lang === "pt" ? "Não foi possível obter a localização. Verifica a permissão do GPS." : "Could not get your location. Check GPS permission.");
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
+    );
+  }
 
   async function finalizar() {
     if (!user) {
@@ -60,6 +84,7 @@ export function CartDrawer() {
           nome_cliente: perfil?.nome_completo || user.email || "Cliente",
           telefone: perfil?.telefone ?? null,
           morada: perfil?.morada ?? null,
+          localizacao_url: entrega === "entrega" ? localizacaoUrl : null,
         },
       });
 
@@ -76,7 +101,8 @@ export function CartDrawer() {
         `${t("delivery_type")}: ${entrega === "entrega" ? t("delivery") : t("pickup")}\n` +
         `${t("full_name")}: ${perfil?.nome_completo ?? ""}\n` +
         (perfil?.telefone ? `${t("phone")}: ${perfil.telefone}\n` : "") +
-        (entrega === "entrega" && perfil?.morada ? `${t("address")}: ${perfil.morada}\n` : "");
+        (entrega === "entrega" && perfil?.morada ? `${t("address")}: ${perfil.morada}\n` : "") +
+        (entrega === "entrega" && localizacaoUrl ? `Localização GPS: ${localizacaoUrl}\n` : "");
 
       clear();
       setOpen(false);
@@ -207,9 +233,24 @@ export function CartDrawer() {
                 </button>
               </div>
               {entrega === "entrega" && (
-                <p className="mt-2 rounded-lg bg-warning/15 px-3 py-2 text-[11px] leading-snug text-foreground">
-                  {t("del_warn")}
-                </p>
+                <div className="mt-3 space-y-2">
+                  <p className="rounded-lg bg-warning/15 px-3 py-2 text-[11px] leading-snug text-foreground">
+                    {t("del_warn")}
+                  </p>
+                  <Button type="button" variant="outline" className="w-full justify-center" onClick={obterLocalizacao} disabled={localizando}>
+                    {localizando ? <Loader2 className="size-4 animate-spin" /> : localizacaoUrl ? <CheckCircle2 className="size-4 text-success" /> : <LocateFixed className="size-4" />}
+                    {localizando
+                      ? lang === "pt" ? "A obter localização…" : "Getting location…"
+                      : localizacaoUrl
+                        ? lang === "pt" ? "Localização GPS adicionada" : "GPS location added"
+                        : lang === "pt" ? "Usar minha localização GPS atual" : "Use my current GPS location"}
+                  </Button>
+                  {localizacaoUrl && (
+                    <a href={localizacaoUrl} target="_blank" rel="noreferrer" className="block text-center text-xs font-semibold text-primary hover:underline">
+                      {lang === "pt" ? "Pré-visualizar no Google Maps" : "Preview on Google Maps"}
+                    </a>
+                  )}
+                </div>
               )}
             </div>
 

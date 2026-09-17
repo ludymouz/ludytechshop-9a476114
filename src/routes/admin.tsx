@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Lock, LogOut, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, Lock, LogOut, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -641,6 +641,14 @@ function Pedidos() {
           <p className="mt-3 text-xs text-muted-foreground">
             {p.metodo_pag} · {p.tipo_entrega} {p.morada ? `· ${p.morada}` : ""}
           </p>
+
+          {p.localizacao_url && (
+            <Button asChild size="sm" variant="outline" className="mt-3">
+              <a href={p.localizacao_url} target="_blank" rel="noreferrer">
+                <ExternalLink className="size-4" /> Abrir no Google Maps
+              </a>
+            </Button>
+          )}
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <div className="w-48">

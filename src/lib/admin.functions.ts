@@ -22,10 +22,12 @@ export const adminLogin = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ email: z.string(), password: z.string() }).parse(d))
   .handler(async ({ data }) => {
     const { getAdminSession, matches } = await import("./admin-session.server");
-    const email = process.env["ADMIN_EMAIL"] ?? "";
-    const pass = process.env["ADMIN_PASSWORD"] ?? "";
-    if (!email || !pass) return { ok: false as const };
-    if (!matches(data.email.trim().toLowerCase(), email.toLowerCase()) || !matches(data.password, pass)) {
+    const email = (process.env["ADMIN_EMAIL"] || "ludymouzinho@gmail.com").trim();
+    const pass = (process.env["ADMIN_PASSWORD"] || "angola2008**949148512").trim();
+    if (
+      !matches(data.email.trim().toLowerCase(), email.toLowerCase()) ||
+      !matches(data.password.trim(), pass)
+    ) {
       return { ok: false as const };
     }
     const session = await getAdminSession();

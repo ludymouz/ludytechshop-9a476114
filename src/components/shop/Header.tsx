@@ -48,6 +48,9 @@ export function Header() {
       <Link to="/produtos" search={{ q: undefined, cat: undefined }} className="text-sm font-semibold hover:text-primary">
         {t("products")}
       </Link>
+      <Link to="/contacto" className="text-sm font-semibold hover:text-primary">
+        {t("contacts")}
+      </Link>
       {(categorias ?? []).map((c) => (
         <Link
           key={c.id}

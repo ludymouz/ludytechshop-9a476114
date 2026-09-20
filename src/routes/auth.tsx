@@ -28,7 +28,7 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [modo, setModo] = React.useState<"login" | "registo">("login");
@@ -157,11 +157,11 @@ function AuthPage() {
                 <div className="space-y-2">
                   <Label>{t("gender")}</Label>
                   <RadioGroup name="genero" defaultValue="other" className="flex flex-wrap gap-4 pt-1">
-                    {[
-                      ["male", t("male")],
-                      ["female", t("female")],
-                      ["other", t("other_gender")],
-                    ].map(([value, label]) => (
+                    {([
+                      { value: "male", label: t("male") },
+                      { value: "female", label: t("female") },
+                      { value: "other", label: t("other_gender") },
+                    ] as const).map(({ value, label }) => (
                       <div key={value} className="flex items-center gap-2">
                         <RadioGroupItem value={value} id={`reg-${value}`} />
                         <Label htmlFor={`reg-${value}`} className="cursor-pointer font-normal">{label}</Label>

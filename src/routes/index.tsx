@@ -1,7 +1,7 @@
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, ShieldCheck, Truck, Wallet } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { ShopLayout } from "@/components/shop/ShopLayout";
 import { ProductCard } from "@/components/shop/ProductCard";
@@ -66,7 +66,7 @@ function Banners() {
         </h2>
         {b.subtitulo && <p className="max-w-lg text-xs opacity-80 sm:text-sm">{b.subtitulo}</p>}
         <div>
-          <Button asChild size="lg" className="mt-2 font-semibold">
+          <Button asChild size="sm" className="mt-1 font-semibold">
             <Link to="/produtos" search={{ q: undefined, cat: undefined }}>
               Ver produtos
             </Link>
@@ -109,7 +109,7 @@ function Banners() {
 }
 
 function Home() {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const { data: categorias } = useQuery(categoriasQuery);
   const { data: produtos, isLoading } = useQuery(produtosQuery);
   const { isFavorito, toggle } = useFavoritos();
@@ -122,22 +122,6 @@ function Home() {
       <div className="mx-auto max-w-7xl px-4 py-6">
         <h1 className="sr-only">Ludy Tech Shop — loja online no Uíge, Angola</h1>
         <Banners />
-
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          {[
-            { icon: Truck, pt: "Entrega no Uíge", en: "Delivery in Uíge", sub: "600 Kz" },
-            { icon: Wallet, pt: "Multicaixa, BAI, BFA", en: "Multicaixa, BAI, BFA", sub: "08:00 – 16:00" },
-            { icon: ShieldCheck, pt: "Produtos garantidos", en: "Trusted products", sub: SHOP.phoneDisplay },
-          ].map((f) => (
-            <div key={f.pt} className="flex items-center gap-3 rounded-2xl border bg-card p-4">
-              <f.icon className="size-6 text-primary" />
-              <div>
-                <p className="text-sm font-semibold">{lang === "pt" ? f.pt : f.en}</p>
-                <p className="text-xs text-muted-foreground">{f.sub}</p>
-              </div>
-            </div>
-          ))}
-        </div>
 
         <section className="mt-10">
           <h2 className="font-display text-xl font-bold">{t("categories")}</h2>

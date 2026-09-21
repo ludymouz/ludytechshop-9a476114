@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ContactoRouteImport } from './routes/contacto'
+import { Route as ContactosRouteImport } from './routes/contactos'
 import { Route as FavoritosRouteImport } from './routes/favoritos'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as ProdutosRouteImport } from './routes/produtos'
@@ -37,6 +38,11 @@ const AuthRoute = AuthRouteImport.update({
 const ContactoRoute = ContactoRouteImport.update({
   id: '/contacto',
   path: '/contacto',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactosRoute = ContactosRouteImport.update({
+  id: '/contactos',
+  path: '/contactos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FavoritosRoute = FavoritosRouteImport.update({
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/contacto': typeof ContactoRoute
+  '/contactos': typeof ContactosRoute
   '/favoritos': typeof FavoritosRoute
   '/perfil': typeof PerfilRoute
   '/produtos': typeof ProdutosRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/contacto': typeof ContactoRoute
+  '/contactos': typeof ContactosRoute
   '/favoritos': typeof FavoritosRoute
   '/perfil': typeof PerfilRoute
   '/produtos': typeof ProdutosRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/contacto': typeof ContactoRoute
+  '/contactos': typeof ContactosRoute
   '/favoritos': typeof FavoritosRoute
   '/perfil': typeof PerfilRoute
   '/produtos': typeof ProdutosRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/contacto'
+    | '/contactos'
     | '/favoritos'
     | '/perfil'
     | '/produtos'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/contacto'
+    | '/contactos'
     | '/favoritos'
     | '/perfil'
     | '/produtos'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/contacto'
+    | '/contactos'
     | '/favoritos'
     | '/perfil'
     | '/produtos'
@@ -140,6 +152,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   ContactoRoute: typeof ContactoRoute
+  ContactosRoute: typeof ContactosRoute
   FavoritosRoute: typeof FavoritosRoute
   PerfilRoute: typeof PerfilRoute
   ProdutosRoute: typeof ProdutosRoute
@@ -175,6 +188,13 @@ declare module '@tanstack/react-router' {
       path: '/contacto'
       fullPath: '/contacto'
       preLoaderRoute: typeof ContactoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contactos': {
+      id: '/contactos'
+      path: '/contactos'
+      fullPath: '/contactos'
+      preLoaderRoute: typeof ContactosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/favoritos': {
@@ -220,6 +240,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   ContactoRoute: ContactoRoute,
+  ContactosRoute: ContactosRoute,
   FavoritosRoute: FavoritosRoute,
   PerfilRoute: PerfilRoute,
   ProdutosRoute: ProdutosRoute,

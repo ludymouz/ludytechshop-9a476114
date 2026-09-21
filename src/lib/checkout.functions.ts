@@ -18,9 +18,38 @@ const schema = z.object({
     .refine((value) => value.startsWith("https://maps.google.com/?q="), "Localização inválida")
     .optional()
     .nullable(),
+  comprovativo_url: z
+    .string()
+    .max(300)
+    .refine((value) => value.startsWith("/api/public/img/"), "Comprovativo inválido")
+    .optional()
+    .nullable(),
 });
 
 const TAXA_ENTREGA = 600;
+
+/** Upload do comprovativo de pagamento (Multicaixa Express / transferência bancária). */
+export const enviarComprovativo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ dataUrl: z.string().min(1), filename: z.string().min(1) }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const match = /^data:([^;]+);base64,(.+)$/.exec(data.dataUrl);
+    if (!match) throw new Error("Ficheiro inválido.");
+    const mime = match[1] ?? "image/jpeg";
+    if (!/^image\/|^application\/pdf$/.test(mime)) throw new Error("Envia uma imagem ou PDF.");
+    const bytes = Buffer.from(match[2] ?? "", "base64");
+    if (bytes.length > 5 * 1024 * 1024) throw new Error("O ficheiro não pode exceder 5 MB.");
+    const ext = (data.filename.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const path = `comprovativos/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabaseAdmin.storage
+      .from("loja")
+      .upload(path, bytes, { contentType: mime, upsert: false });
+    if (error) throw new Error(error.message);
+    return { url: `/api/public/img/${path}` };
+  });
 
 export const criarPedido = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -60,6 +89,7 @@ export const criarPedido = createServerFn({ method: "POST" })
         telefone: data.telefone ?? null,
         morada: data.morada ?? null,
         localizacao_url: data.tipo_entrega === "entrega" ? (data.localizacao_url ?? null) : null,
+        comprovativo_url: data.comprovativo_url ?? null,
         subtotal,
         taxa_entrega: taxa,
         total,

@@ -1,8 +1,9 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Heart, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
 import { useCart } from "@/lib/cart";
 import { useI18n } from "@/lib/i18n";
 import { effectivePrice, formatKz } from "@/lib/shop-config";
@@ -29,7 +30,10 @@ export function ProductCard({
   onToggleFavorito?: (id: string) => void;
 }) {
   const { add, setOpen } = useCart();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const href = useRouterState({ select: (s) => s.location.href });
   const preco = effectivePrice(produto);
   const esgotado = produto.stock <= 0;
 
@@ -73,7 +77,7 @@ export function ProductCard({
         </button>
       )}
 
-      <div className="flex flex-1 flex-col gap-2 p-4">
+      <div className="flex flex-1 flex-col gap-2 p-3 sm:p-4">
         <Link
           to="/produto/$id"
           params={{ id: produto.id }}
@@ -81,8 +85,10 @@ export function ProductCard({
         >
           {produto.nome}
         </Link>
-        <div className="mt-auto flex items-baseline gap-2">
-          <span className="font-display text-lg font-bold text-primary">{formatKz(preco)}</span>
+        <div className="mt-auto flex flex-wrap items-baseline gap-x-2">
+          <span className="font-display text-base font-bold text-primary sm:text-lg">
+            {formatKz(preco)}
+          </span>
           {produto.em_promocao && produto.preco_promo != null && (
             <span className="text-xs text-muted-foreground line-through">
               {formatKz(produto.preco)}
@@ -94,9 +100,18 @@ export function ProductCard({
         </p>
         <Button
           size="sm"
-          className="mt-1 w-full font-semibold"
+          className="mt-1 flex w-full items-center justify-center gap-1.5 whitespace-nowrap px-2 text-[12px] font-semibold leading-none sm:text-sm"
           disabled={esgotado}
           onClick={() => {
+            if (!user) {
+              toast.error(
+                lang === "pt"
+                  ? "Inicia sessão para adicionares ao carrinho."
+                  : "Sign in to add items to your cart.",
+              );
+              navigate({ to: "/auth", search: { redirect: href } });
+              return;
+            }
             add(
               {
                 id: produto.id,
@@ -111,7 +126,8 @@ export function ProductCard({
             setOpen(true);
           }}
         >
-          <ShoppingCart className="size-4" /> {t("add_cart")}
+          <ShoppingCart className="size-4 shrink-0" />
+          <span className="truncate">{t("add_cart")}</span>
         </Button>
       </div>
     </article>

@@ -33,6 +33,37 @@ export const ORDER_STATES = [
 
 export type OrderState = (typeof ORDER_STATES)[number];
 
+/** Nomes que o cliente vê para cada estado da encomenda. */
+export const ORDER_STATE_LABELS: Record<string, { pt: string; en: string }> = {
+  Pendente: { pt: "Pendente", en: "Pending" },
+  Confirmado: { pt: "A preparar", en: "Preparing" },
+  "Em entrega": { pt: "A caminho com estafeta", en: "On the way with courier" },
+  Entregue: { pt: "Entregue", en: "Delivered" },
+  Cancelado: { pt: "Cancelado", en: "Cancelled" },
+};
+
+export function orderStateLabel(estado: string, lang: "pt" | "en" = "pt") {
+  return ORDER_STATE_LABELS[estado]?.[lang] ?? estado;
+}
+
+/** Mensagem pronta a enviar ao cliente pelo WhatsApp quando o estado muda. */
+export function whatsappStatusMessage(estado: string, numero: number | string, cliente: string) {
+  const saudacao = `Olá ${cliente || "cliente"}, aqui é a ${SHOP.name}.`;
+  const corpo: Record<string, string> = {
+    Pendente: `Recebemos a tua encomenda #${numero}. Vamos confirmar já de seguida.`,
+    Confirmado: `A tua encomenda #${numero} foi confirmada e já está a ser preparada. 📦`,
+    "Em entrega": `A tua encomenda #${numero} já vai a caminho com o nosso estafeta. 🛵`,
+    Entregue: `A tua encomenda #${numero} foi entregue. Obrigado pela preferência! 🧡`,
+    Cancelado: `A tua encomenda #${numero} foi cancelada. Fala connosco se precisares de ajuda.`,
+  };
+  return `${saudacao}\n\n${corpo[estado] ?? `Estado da encomenda #${numero}: ${estado}.`}`;
+}
+
+/** Métodos que exigem comprovativo de pagamento. */
+export function requiresProof(metodo: string) {
+  return metodo !== "Dinheiro vivo";
+}
+
 export function formatKz(value: number): string {
   return `${new Intl.NumberFormat("pt-PT", { maximumFractionDigits: 0 }).format(Math.round(value))} Kz`;
 }

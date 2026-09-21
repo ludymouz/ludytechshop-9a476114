@@ -15,6 +15,13 @@
       "when": 1789621692410,
       "tag": "0001_add_order_location_url",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789966988195,
+      "tag": "0002_add_order_payment_proof",
+      "breakpoints": true
     }
   ]
 }

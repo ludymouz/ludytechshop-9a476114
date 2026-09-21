@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Loader2, LocateFixed, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import { CheckCircle2, Loader2, LocateFixed, Minus, Paperclip, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useCart } from "@/lib/cart";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
-import { PAYMENT_METHODS, SHOP, formatKz, paymentWindow } from "@/lib/shop-config";
-import { criarPedido } from "@/lib/checkout.functions";
+import { PAYMENT_METHODS, SHOP, formatKz, paymentWindow, requiresProof } from "@/lib/shop-config";
+import { criarPedido, enviarComprovativo } from "@/lib/checkout.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export function CartDrawer() {
@@ -19,12 +19,15 @@ export function CartDrawer() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const criar = useServerFn(criarPedido);
+  const uploadProva = useServerFn(enviarComprovativo);
 
   const [pagamento, setPagamento] = React.useState<string>(PAYMENT_METHODS[0].value);
   const [entrega, setEntrega] = React.useState<"entrega" | "levantamento">("entrega");
   const [enviando, setEnviando] = React.useState(false);
   const [localizando, setLocalizando] = React.useState(false);
   const [localizacaoUrl, setLocalizacaoUrl] = React.useState<string | null>(null);
+  const [comprovativoUrl, setComprovativoUrl] = React.useState<string | null>(null);
+  const [aEnviarProva, setAEnviarProva] = React.useState(false);
   const [janela, setJanela] = React.useState(() => paymentWindow());
 
   React.useEffect(() => {
@@ -57,6 +60,29 @@ export function CartDrawer() {
     );
   }
 
+  async function carregarComprovativo(file: File) {
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(lang === "pt" ? "O ficheiro não pode exceder 5 MB." : "File must be under 5 MB.");
+      return;
+    }
+    setAEnviarProva(true);
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error("Falha a ler o ficheiro"));
+        reader.readAsDataURL(file);
+      });
+      const res = await uploadProva({ data: { dataUrl, filename: file.name } });
+      setComprovativoUrl(res.url);
+      toast.success(lang === "pt" ? "Comprovativo anexado." : "Receipt attached.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro no envio do comprovativo.");
+    } finally {
+      setAEnviarProva(false);
+    }
+  }
+
   async function finalizar() {
     if (!user) {
       toast.error(t("need_login"));
@@ -85,6 +111,7 @@ export function CartDrawer() {
           telefone: perfil?.telefone ?? null,
           morada: perfil?.morada ?? null,
           localizacao_url: entrega === "entrega" ? localizacaoUrl : null,
+          comprovativo_url: requiresProof(pagamento) ? comprovativoUrl : null,
         },
       });
 
@@ -102,9 +129,13 @@ export function CartDrawer() {
         `${t("full_name")}: ${perfil?.nome_completo ?? ""}\n` +
         (perfil?.telefone ? `${t("phone")}: ${perfil.telefone}\n` : "") +
         (entrega === "entrega" && perfil?.morada ? `${t("address")}: ${perfil.morada}\n` : "") +
-        (entrega === "entrega" && localizacaoUrl ? `Localização GPS: ${localizacaoUrl}\n` : "");
+        (entrega === "entrega" && localizacaoUrl ? `Localização GPS: ${localizacaoUrl}\n` : "") +
+        (requiresProof(pagamento) && comprovativoUrl
+          ? `Comprovativo: ${window.location.origin}${comprovativoUrl}\n`
+          : "");
 
       clear();
+      setComprovativoUrl(null);
       setOpen(false);
       toast.success(lang === "pt" ? `Pedido #${res.numero} registado!` : `Order #${res.numero} placed!`);
       window.open(`https://wa.me/${SHOP.phone}?text=${encodeURIComponent(texto)}`, "_blank");
@@ -202,6 +233,43 @@ export function CartDrawer() {
                   </button>
                 ))}
               </div>
+
+              {requiresProof(pagamento) && (
+                <div className="mt-3 rounded-lg border border-dashed p-3">
+                  <p className="text-[11px] font-semibold">
+                    {lang === "pt"
+                      ? "Comprovativo de pagamento (opcional agora, acelera a confirmação)"
+                      : "Payment receipt (optional now, speeds up confirmation)"}
+                  </p>
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    className="mt-2 w-full text-xs"
+                    disabled={aEnviarProva}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void carregarComprovativo(file);
+                    }}
+                  />
+                  {aEnviarProva && (
+                    <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <Loader2 className="size-3 animate-spin" />
+                      {lang === "pt" ? "A enviar…" : "Uploading…"}
+                    </p>
+                  )}
+                  {comprovativoUrl && !aEnviarProva && (
+                    <a
+                      href={comprovativoUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-primary hover:underline"
+                    >
+                      <Paperclip className="size-3" />
+                      {lang === "pt" ? "Comprovativo anexado — ver" : "Receipt attached — view"}
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
 
             <div>

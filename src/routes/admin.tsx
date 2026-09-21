@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ExternalLink, Lock, LogOut, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, Lock, LogOut, MessageCircle, Paperclip, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { ORDER_STATES, formatKz } from "@/lib/shop-config";
+import { ORDER_STATES, formatKz, orderStateLabel, whatsappStatusMessage } from "@/lib/shop-config";
 import {
   adminCreateCategoria,
   adminDashboard,
@@ -266,7 +266,7 @@ function Dashboard() {
             <li key={p.id} className="flex flex-wrap items-center gap-3 py-3">
               <span className="font-semibold">#{p.numero}</span>
               <span className="text-muted-foreground">{p.nome_cliente}</span>
-              <Badge variant="outline">{p.estado}</Badge>
+              <Badge variant="outline">{orderStateLabel(p.estado)}</Badge>
               <span className="ml-auto font-semibold text-primary">{formatKz(Number(p.total))}</span>
             </li>
           ))}
@@ -642,12 +642,49 @@ function Pedidos() {
             {p.metodo_pag} · {p.tipo_entrega} {p.morada ? `· ${p.morada}` : ""}
           </p>
 
-          {p.localizacao_url && (
-            <Button asChild size="sm" variant="outline" className="mt-3">
-              <a href={p.localizacao_url} target="_blank" rel="noreferrer">
-                <ExternalLink className="size-4" /> Abrir no Google Maps
-              </a>
-            </Button>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {p.localizacao_url && (
+              <Button asChild size="sm" variant="outline">
+                <a href={p.localizacao_url} target="_blank" rel="noreferrer">
+                  <ExternalLink className="size-4" /> Abrir no Google Maps
+                </a>
+              </Button>
+            )}
+            {p.comprovativo_url && (
+              <Button asChild size="sm" variant="outline">
+                <a href={p.comprovativo_url} target="_blank" rel="noreferrer">
+                  <Paperclip className="size-4" /> Ver comprovativo
+                </a>
+              </Button>
+            )}
+          </div>
+
+          {p.telefone && (
+            <div className="mt-3 rounded-xl border border-dashed p-3">
+              <p className="text-xs font-semibold text-muted-foreground">
+                Avisar o cliente no WhatsApp
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {ORDER_STATES.map((estado) => (
+                  <Button
+                    key={estado}
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const numeroTel = String(p.telefone).replace(/\D/g, "");
+                      const destino = numeroTel.startsWith("244") ? numeroTel : `244${numeroTel}`;
+                      const texto = whatsappStatusMessage(estado, p.numero, p.nome_cliente);
+                      window.open(
+                        `https://wa.me/${destino}?text=${encodeURIComponent(texto)}`,
+                        "_blank",
+                      );
+                    }}
+                  >
+                    <MessageCircle className="size-4" /> {orderStateLabel(estado)}
+                  </Button>
+                ))}
+              </div>
+            </div>
           )}
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -666,7 +703,7 @@ function Pedidos() {
                 <SelectContent>
                   {ORDER_STATES.map((s) => (
                     <SelectItem key={s} value={s}>
-                      {s}
+                      {orderStateLabel(s)}
                     </SelectItem>
                   ))}
                 </SelectContent>

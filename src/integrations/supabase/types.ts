@@ -235,6 +235,7 @@ export type Database = {
       }
       pedidos: {
         Row: {
+          comprovativo_url: string | null
           criado_em: string
           estado: string
           id: string
@@ -251,6 +252,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          comprovativo_url?: string | null
           criado_em?: string
           estado?: string
           id?: string
@@ -267,6 +269,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          comprovativo_url?: string | null
           criado_em?: string
           estado?: string
           id?: string

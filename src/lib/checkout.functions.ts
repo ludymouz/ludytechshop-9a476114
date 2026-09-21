@@ -89,6 +89,7 @@ export const criarPedido = createServerFn({ method: "POST" })
         telefone: data.telefone ?? null,
         morada: data.morada ?? null,
         localizacao_url: data.tipo_entrega === "entrega" ? (data.localizacao_url ?? null) : null,
+        comprovativo_url: data.comprovativo_url ?? null,
         subtotal,
         taxa_entrega: taxa,
         total,

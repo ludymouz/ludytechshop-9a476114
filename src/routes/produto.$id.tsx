@@ -1,13 +1,14 @@
 import * as React from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Heart, Minus, Plus, ShoppingCart, Star } from "lucide-react";
+import { ArrowDown, ArrowLeft, Heart, Minus, Plus, ShoppingCart, Star } from "lucide-react";
 import { toast } from "sonner";
 
 import { ShopLayout } from "@/components/shop/ShopLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useCart } from "@/lib/cart";
@@ -52,10 +53,12 @@ function Estrelas({ n, onSelect }: { n: number; onSelect?: (v: number) => void }
 
 function ProdutoDetalhe() {
   const { id } = Route.useParams();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { user } = useAuth();
   const { add, setOpen } = useCart();
   const { isFavorito, toggle } = useFavoritos();
+  const navigate = useNavigate();
+  const href = useRouterState({ select: (s) => s.location.href });
   const qc = useQueryClient();
 
   const { data: produto, isLoading } = useQuery(produtoQuery(id));
@@ -64,6 +67,8 @@ function ProdutoDetalhe() {
   const [estrelas, setEstrelas] = React.useState(5);
   const [comentario, setComentario] = React.useState("");
   const [foto, setFoto] = React.useState(0);
+  const [tab, setTab] = React.useState("descricao");
+  const infoRef = React.useRef<HTMLDivElement | null>(null);
 
   const enviar = useMutation({
     mutationFn: async () => {
@@ -124,10 +129,32 @@ function ProdutoDetalhe() {
   ].filter(Boolean) as string[];
   const preco = effectivePrice(produto);
   const esgotado = produto.stock <= 0;
-  const media =
-    (avaliacoes ?? []).length > 0
-      ? (avaliacoes ?? []).reduce((s, a) => s + a.estrelas, 0) / (avaliacoes ?? []).length
-      : 0;
+  const lista = avaliacoes ?? [];
+  const media = lista.length > 0 ? lista.reduce((s, a) => s + a.estrelas, 0) / lista.length : 0;
+
+  function irParaDescricao() {
+    setTab("descricao");
+    requestAnimationFrame(() => {
+      infoRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  const especificacoes: Array<[string, string]> = [
+    [lang === "pt" ? "Preço" : "Price", formatKz(preco)],
+    [t("stock"), esgotado ? t("out_of_stock") : `${produto.stock}`],
+    [
+      lang === "pt" ? "Disponibilidade" : "Availability",
+      esgotado ? t("out_of_stock") : lang === "pt" ? "Disponível" : "Available",
+    ],
+    [
+      lang === "pt" ? "Entrega" : "Delivery",
+      lang === "pt" ? "Entrega no Uíge ou levantamento na loja" : "Delivery in Uíge or store pickup",
+    ],
+    [
+      lang === "pt" ? "Pagamento" : "Payment",
+      "Dinheiro vivo, Multicaixa Express, BAI, BFA, Atlântico",
+    ],
+  ];
 
   return (
     <ShopLayout>
@@ -174,7 +201,7 @@ function ProdutoDetalhe() {
             <div className="mt-2 flex items-center gap-2">
               <Estrelas n={Math.round(media)} />
               <span className="text-xs text-muted-foreground">
-                {(avaliacoes ?? []).length} {t("reviews").toLowerCase()}
+                {lista.length} {t("reviews").toLowerCase()}
               </span>
             </div>
 
@@ -190,14 +217,14 @@ function ProdutoDetalhe() {
               {esgotado ? t("out_of_stock") : `${produto.stock} ${t("in_stock")}`}
             </p>
 
-            {produto.descricao && (
-              <div className="mt-6">
-                <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
-                  {t("description")}
-                </p>
-                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{produto.descricao}</p>
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={irParaDescricao}
+              className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-primary/40 px-4 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/10"
+            >
+              <ArrowDown className="size-3.5" />
+              {lang === "pt" ? "Ver descrição" : "See description"}
+            </button>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2 rounded-full border px-2 py-1">
@@ -217,9 +244,18 @@ function ProdutoDetalhe() {
 
               <Button
                 size="lg"
-                className="font-semibold"
+                className="flex flex-1 items-center justify-center gap-2 whitespace-nowrap font-semibold sm:flex-none"
                 disabled={esgotado}
                 onClick={() => {
+                  if (!user) {
+                    toast.error(
+                      lang === "pt"
+                        ? "Inicia sessão para adicionares ao carrinho."
+                        : "Sign in to add items to your cart.",
+                    );
+                    navigate({ to: "/auth", search: { redirect: href } });
+                    return;
+                  }
                   add(
                     {
                       id: produto.id,
@@ -230,10 +266,12 @@ function ProdutoDetalhe() {
                     },
                     qty,
                   );
+                  toast.success(produto.nome);
                   setOpen(true);
                 }}
               >
-                <ShoppingCart className="size-4" /> {t("add_cart")}
+                <ShoppingCart className="size-4 shrink-0" />
+                <span className="truncate">{t("add_cart")}</span>
               </Button>
 
               <Button size="lg" variant="outline" onClick={() => toggle(produto.id)}>
@@ -244,53 +282,88 @@ function ProdutoDetalhe() {
           </div>
         </div>
 
-        <section className="mt-16 max-w-3xl">
-          <h2 className="font-display text-xl font-bold">{t("reviews")}</h2>
+        <div ref={infoRef} className="mt-14 max-w-3xl scroll-mt-28">
+          <Tabs value={tab} onValueChange={setTab}>
+            <TabsList className="flex-wrap">
+              <TabsTrigger value="descricao">{t("description")}</TabsTrigger>
+              <TabsTrigger value="especificacoes">
+                {lang === "pt" ? "Especificações" : "Specifications"}
+              </TabsTrigger>
+              <TabsTrigger value="avaliacoes">
+                {t("reviews")} ({lista.length})
+              </TabsTrigger>
+            </TabsList>
 
-          {user ? (
-            <div className="mt-4 rounded-2xl border p-4">
-              <p className="text-sm font-semibold">{t("write_review")}</p>
-              <div className="mt-2">
-                <Estrelas n={estrelas} onSelect={setEstrelas} />
-              </div>
-              <Textarea
-                className="mt-3"
-                rows={3}
-                placeholder={t("your_comment")}
-                value={comentario}
-                onChange={(e) => setComentario(e.target.value)}
-              />
-              <Button className="mt-3" disabled={enviar.isPending} onClick={() => enviar.mutate()}>
-                {t("send")}
-              </Button>
-            </div>
-          ) : (
-            <p className="mt-4 text-sm text-muted-foreground">
-              {t("need_login")}{" "}
-              <Link to="/auth" className="font-semibold text-primary hover:underline">
-                {t("login")}
-              </Link>
-            </p>
-          )}
-
-          <ul className="mt-6 space-y-4">
-            {(avaliacoes ?? []).length === 0 && (
-              <li className="text-sm text-muted-foreground">{t("no_reviews")}</li>
-            )}
-            {(avaliacoes ?? []).map((a) => (
-              <li key={a.id} className="rounded-2xl border p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold">{a.autor || "Cliente"}</span>
-                  <Estrelas n={a.estrelas} />
-                </div>
-                {a.comentario && <p className="mt-2 text-sm">{a.comentario}</p>}
-                <p className="mt-2 text-[11px] text-muted-foreground">
-                  {new Date(a.criado_em).toLocaleDateString("pt-PT")}
+            <TabsContent value="descricao" className="mt-6">
+              {produto.descricao ? (
+                <p className="whitespace-pre-line text-sm leading-relaxed">{produto.descricao}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {lang === "pt"
+                    ? "Este produto ainda não tem descrição."
+                    : "This product has no description yet."}
                 </p>
-              </li>
-            ))}
-          </ul>
-        </section>
+              )}
+            </TabsContent>
+
+            <TabsContent value="especificacoes" className="mt-6">
+              <dl className="divide-y rounded-2xl border">
+                {especificacoes.map(([k, v]) => (
+                  <div key={k} className="flex flex-wrap gap-2 px-4 py-3 text-sm">
+                    <dt className="font-semibold">{k}</dt>
+                    <dd className="ml-auto text-right text-muted-foreground">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </TabsContent>
+
+            <TabsContent value="avaliacoes" className="mt-6">
+              {user ? (
+                <div className="rounded-2xl border p-4">
+                  <p className="text-sm font-semibold">{t("write_review")}</p>
+                  <div className="mt-2">
+                    <Estrelas n={estrelas} onSelect={setEstrelas} />
+                  </div>
+                  <Textarea
+                    className="mt-3"
+                    rows={3}
+                    placeholder={t("your_comment")}
+                    value={comentario}
+                    onChange={(e) => setComentario(e.target.value)}
+                  />
+                  <Button className="mt-3" disabled={enviar.isPending} onClick={() => enviar.mutate()}>
+                    {t("send")}
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {t("need_login")}{" "}
+                  <Link to="/auth" search={{ redirect: href }} className="font-semibold text-primary hover:underline">
+                    {t("login")}
+                  </Link>
+                </p>
+              )}
+
+              <ul className="mt-6 space-y-4">
+                {lista.length === 0 && (
+                  <li className="text-sm text-muted-foreground">{t("no_reviews")}</li>
+                )}
+                {lista.map((a) => (
+                  <li key={a.id} className="rounded-2xl border p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold">{a.autor || "Cliente"}</span>
+                      <Estrelas n={a.estrelas} />
+                    </div>
+                    {a.comentario && <p className="mt-2 text-sm">{a.comentario}</p>}
+                    <p className="mt-2 text-[11px] text-muted-foreground">
+                      {new Date(a.criado_em).toLocaleDateString("pt-PT")}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </ShopLayout>
   );

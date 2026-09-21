@@ -42,7 +42,7 @@ function Banners() {
     return () => clearInterval(id);
   }, [banners.length]);
 
-  if (isLoading) return <Skeleton className="h-64 w-full rounded-3xl sm:h-80" />;
+  if (isLoading) return <Skeleton className="h-36 w-full rounded-3xl sm:h-48" />;
   if (banners.length === 0) return null;
 
   const b = banners[Math.min(i, banners.length - 1)]!;
@@ -57,14 +57,14 @@ function Banners() {
         />
       )}
       <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/80 to-transparent" />
-      <div className="relative flex min-h-64 flex-col justify-center gap-4 p-8 sm:min-h-80 sm:p-14">
-        <p className="w-fit rounded-full bg-primary px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-primary-foreground">
+      <div className="relative flex min-h-36 flex-col justify-center gap-2 p-5 sm:min-h-48 sm:gap-3 sm:p-8">
+        <p className="w-fit rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary-foreground">
           {SHOP.name}
         </p>
-        <h2 className="max-w-xl font-display text-3xl font-black leading-tight sm:text-5xl">
+        <h2 className="max-w-xl font-display text-xl font-black leading-tight sm:text-3xl">
           {b.titulo}
         </h2>
-        {b.subtitulo && <p className="max-w-lg text-sm opacity-80 sm:text-base">{b.subtitulo}</p>}
+        {b.subtitulo && <p className="max-w-lg text-xs opacity-80 sm:text-sm">{b.subtitulo}</p>}
         <div>
           <Button asChild size="lg" className="mt-2 font-semibold">
             <Link to="/produtos" search={{ q: undefined, cat: undefined }}>

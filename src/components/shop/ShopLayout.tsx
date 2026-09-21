@@ -3,14 +3,12 @@ import { MessageCircle } from "lucide-react";
 
 import { SHOP } from "@/lib/shop-config";
 import { Header } from "./Header";
-import { Footer } from "./Footer";
 
 export function ShopLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
-      <main className="flex-1">{children}</main>
-      <Footer />
+      <main className="flex-1 pb-10">{children}</main>
       <a
         href={`https://wa.me/${SHOP.phone}`}
         target="_blank"

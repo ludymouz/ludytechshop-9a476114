@@ -47,7 +47,7 @@ function AuthPage() {
   }, []);
 
   React.useEffect(() => {
-    if (user) navigate({ to: redirect ?? "/perfil" });
+    if (user) navigate({ to: (redirect ?? "/perfil") as "/perfil" });
   }, [user, navigate, redirect]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -78,7 +78,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw new Error(error.message);
         toast.success("Bem-vindo de volta!");
-        navigate({ to: "/" });
+        navigate({ to: (redirect ?? "/") as "/" });
       } else {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -97,7 +97,7 @@ function AuthPage() {
         });
         if (error) throw new Error(error.message);
         if (data.session) {
-          navigate({ to: "/perfil" });
+          navigate({ to: (redirect ?? "/perfil") as "/perfil" });
         } else {
           toast.success("Conta criada! Confirma o teu email para entrares.");
           setModo("login");

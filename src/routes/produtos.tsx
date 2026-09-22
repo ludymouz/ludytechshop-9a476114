@@ -72,11 +72,31 @@ function Produtos() {
         <h1 className="font-display text-2xl font-black sm:text-3xl">
           {categoria ? categoria.nome : t("products")}
         </h1>
-        {q && (
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("search")}: <span className="font-semibold text-foreground">{q}</span>
-          </p>
-        )}
+
+        <div className="relative mt-4 max-w-lg">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={termo}
+            onChange={(e) => setTermo(e.target.value)}
+            placeholder={t("search_ph")}
+            aria-label={t("search")}
+            className="rounded-full pl-9 pr-9"
+          />
+          {termo && (
+            <button
+              type="button"
+              aria-label="Limpar pesquisa"
+              onClick={() => {
+                setTermo("");
+                navigate({ search: { q: undefined, cat } });
+              }}
+              className="absolute right-2 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          )}
+        </div>
+
 
         <div className="mt-6 flex flex-wrap items-center gap-2">
           <Link

@@ -1,10 +1,9 @@
 import * as React from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Heart, LogOut, Menu, Search, ShoppingCart, User } from "lucide-react";
+import { Heart, LogOut, Menu, ShoppingCart, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,13 +19,13 @@ import { useI18n } from "@/lib/i18n";
 import { SHOP } from "@/lib/shop-config";
 import logoAsset from "@/assets/ludy-tech-logo.png.asset.json";
 import { NotificationBell } from "./NotificationBell";
+import { SearchBox } from "./SearchBox";
 
 export function Header() {
   const { t, lang, setLang } = useI18n();
   const { count, setOpen } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [q, setQ] = React.useState("");
 
   const { data: categorias } = useQuery({
     queryKey: ["categorias"],
@@ -36,10 +35,7 @@ export function Header() {
     },
   });
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    navigate({ to: "/produtos", search: { q: q || undefined, cat: undefined } });
-  }
+
 
   const nav = (
     <>
@@ -92,16 +88,7 @@ export function Header() {
           </span>
         </Link>
 
-        <form onSubmit={submit} className="relative mx-auto hidden w-full max-w-md md:block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={t("search_ph")}
-            className="rounded-full pl-9"
-            aria-label={t("search")}
-          />
-        </form>
+        <SearchBox className="mx-auto hidden w-full max-w-md md:block" />
 
         <div className="ml-auto flex items-center gap-0.5">
           <Button
@@ -183,16 +170,9 @@ export function Header() {
         </nav>
       </div>
 
-      <form onSubmit={submit} className="relative px-4 pb-3 md:hidden">
-        <Search className="pointer-events-none absolute left-7 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={t("search_ph")}
-          className="rounded-full pl-9"
-          aria-label={t("search")}
-        />
-      </form>
+      <div className="px-4 pb-3 md:hidden">
+        <SearchBox />
+      </div>
     </header>
   );
 }

@@ -1,9 +1,11 @@
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Search, X } from "lucide-react";
 
 import { ShopLayout } from "@/components/shop/ShopLayout";
 import { ProductCard } from "@/components/shop/ProductCard";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -47,14 +49,19 @@ function Produtos() {
   const { data: produtos, isLoading } = useQuery(produtosQuery);
   const { isFavorito, toggle } = useFavoritos();
   const [ordem, setOrdem] = React.useState("newest");
+  const [termo, setTermo] = React.useState(q ?? "");
+
+  React.useEffect(() => {
+    setTermo(q ?? "");
+  }, [q]);
 
   const categoria = (categorias ?? []).find((c) => c.slug === cat);
 
   const lista = React.useMemo(() => {
     let out = [...(produtos ?? [])];
     if (categoria) out = out.filter((p) => p.categoria_id === categoria.id);
-    if (q) {
-      const needle = q.toLowerCase();
+    if (termo.trim()) {
+      const needle = termo.trim().toLowerCase();
       out = out.filter(
         (p) =>
           p.nome.toLowerCase().includes(needle) ||
@@ -64,7 +71,7 @@ function Produtos() {
     if (ordem === "cheapest") out.sort((a, b) => effectivePrice(a) - effectivePrice(b));
     if (ordem === "priciest") out.sort((a, b) => effectivePrice(b) - effectivePrice(a));
     return out;
-  }, [produtos, categoria, q, ordem]);
+  }, [produtos, categoria, termo, ordem]);
 
   return (
     <ShopLayout>
@@ -72,11 +79,31 @@ function Produtos() {
         <h1 className="font-display text-2xl font-black sm:text-3xl">
           {categoria ? categoria.nome : t("products")}
         </h1>
-        {q && (
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("search")}: <span className="font-semibold text-foreground">{q}</span>
-          </p>
-        )}
+
+        <div className="relative mt-4 max-w-lg">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={termo}
+            onChange={(e) => setTermo(e.target.value)}
+            placeholder={t("search_ph")}
+            aria-label={t("search")}
+            className="rounded-full pl-9 pr-9"
+          />
+          {termo && (
+            <button
+              type="button"
+              aria-label="Limpar pesquisa"
+              onClick={() => {
+                setTermo("");
+                navigate({ search: { q: undefined, cat } });
+              }}
+              className="absolute right-2 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          )}
+        </div>
+
 
         <div className="mt-6 flex flex-wrap items-center gap-2">
           <Link
@@ -117,15 +144,11 @@ function Produtos() {
           </div>
         </div>
 
-        {q && (
-          <button
-            type="button"
-            className="mt-4 text-xs font-semibold text-primary hover:underline"
-            onClick={() => navigate({ search: { q: undefined, cat } })}
-          >
-            {t("back")}
-          </button>
-        )}
+        <p className="mt-4 text-xs text-muted-foreground">
+          {lista.length} {lista.length === 1 ? "produto" : "produtos"}
+        </p>
+
+
 
         {isLoading ? (
           <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">

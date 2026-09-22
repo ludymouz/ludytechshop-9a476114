@@ -174,16 +174,9 @@ export function Header() {
         </nav>
       </div>
 
-      <form onSubmit={submit} className="relative px-4 pb-3 md:hidden">
-        <Search className="pointer-events-none absolute left-7 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={t("search_ph")}
-          className="rounded-full pl-9"
-          aria-label={t("search")}
-        />
-      </form>
+      <div className="px-4 pb-3 md:hidden">
+        <SearchBox />
+      </div>
     </header>
   );
 }

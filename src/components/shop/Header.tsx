@@ -18,6 +18,7 @@ import { useAuth } from "@/lib/auth";
 import { useCart } from "@/lib/cart";
 import { useI18n } from "@/lib/i18n";
 import { SHOP } from "@/lib/shop-config";
+import logoAsset from "@/assets/ludy-tech-logo.png.asset.json";
 import { NotificationBell } from "./NotificationBell";
 
 export function Header() {
@@ -78,12 +79,16 @@ export function Header() {
           </SheetContent>
         </Sheet>
 
-        <Link to="/" className="flex shrink-0 items-center gap-2">
-          <span className="grid size-9 place-items-center rounded-xl bg-primary font-display text-lg font-black text-primary-foreground">
-            L
-          </span>
-          <span className="hidden font-display text-lg font-black tracking-tight sm:block">
-            Ludy <span className="text-primary">Tech</span>
+        <Link to="/" className="flex shrink-0 items-center gap-2" aria-label="Ludy Tech Shop — página inicial">
+          <img
+            src={logoAsset.url}
+            alt=""
+            width={40}
+            height={40}
+            className="size-10 shrink-0 object-contain"
+          />
+          <span className="hidden font-display text-lg font-black sm:block">
+            Ludy <span className="text-primary">Tech</span> Shop
           </span>
         </Link>
 

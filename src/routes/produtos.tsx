@@ -137,15 +137,11 @@ function Produtos() {
           </div>
         </div>
 
-        {q && (
-          <button
-            type="button"
-            className="mt-4 text-xs font-semibold text-primary hover:underline"
-            onClick={() => navigate({ search: { q: undefined, cat } })}
-          >
-            {t("back")}
-          </button>
-        )}
+        <p className="mt-4 text-xs text-muted-foreground">
+          {lista.length} {lista.length === 1 ? "produto" : "produtos"}
+        </p>
+
+
 
         {isLoading ? (
           <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">

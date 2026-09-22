@@ -69,7 +69,7 @@ function Produtos() {
     if (ordem === "cheapest") out.sort((a, b) => effectivePrice(a) - effectivePrice(b));
     if (ordem === "priciest") out.sort((a, b) => effectivePrice(b) - effectivePrice(a));
     return out;
-  }, [produtos, categoria, q, ordem]);
+  }, [produtos, categoria, termo, ordem]);
 
   return (
     <ShopLayout>

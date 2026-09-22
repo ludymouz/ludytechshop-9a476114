@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ExternalLink, Lock, LogOut, MessageCircle, Paperclip, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, LogOut, MessageCircle, Paperclip, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { ORDER_STATES, formatKz, orderStateLabel, whatsappStatusMessage } from "@/lib/shop-config";
+import logoAsset from "@/assets/ludy-tech-logo.png.asset.json";
 import {
   adminCreateCategoria,
   adminDashboard,
@@ -114,12 +115,16 @@ function AdminLogin({ onOk }: { onOk: () => void }) {
           }
         }}
       >
-        <div className="mb-6 flex items-center gap-2">
-          <span className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground">
-            <Lock className="size-5" />
-          </span>
+        <div className="mb-6 flex items-center gap-3">
+          <img
+            src={logoAsset.url}
+            alt="Logótipo Ludy Tech Shop"
+            width={48}
+            height={48}
+            className="size-12 shrink-0 object-contain"
+          />
           <div>
-            <p className="font-display text-lg font-black">Painel Ludy</p>
+            <p className="font-display text-lg font-black">Ludy Tech Shop</p>
             <p className="text-xs text-muted-foreground">Área reservada</p>
           </div>
         </div>
@@ -147,11 +152,15 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
     <div className="min-h-screen bg-muted/40">
       <header className="sticky top-0 z-30 border-b bg-background">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">
-          <span className="grid size-9 place-items-center rounded-xl bg-primary font-display font-black text-primary-foreground">
-            L
-          </span>
+          <img
+            src={logoAsset.url}
+            alt=""
+            width={40}
+            height={40}
+            className="size-10 shrink-0 object-contain"
+          />
           <p className="font-display text-lg font-black">
-            Painel <span className="text-primary">Ludy Tech</span>
+            Painel <span className="text-primary">Ludy Tech Shop</span>
           </p>
           <div className="ml-auto flex gap-2">
             <Button variant="outline" size="sm" asChild>

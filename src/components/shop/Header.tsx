@@ -19,13 +19,13 @@ import { useI18n } from "@/lib/i18n";
 import { SHOP } from "@/lib/shop-config";
 import logoAsset from "@/assets/ludy-tech-logo.png.asset.json";
 import { NotificationBell } from "./NotificationBell";
+import { SearchBox } from "./SearchBox";
 
 export function Header() {
   const { t, lang, setLang } = useI18n();
   const { count, setOpen } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [q, setQ] = React.useState("");
 
   const { data: categorias } = useQuery({
     queryKey: ["categorias"],
@@ -35,10 +35,7 @@ export function Header() {
     },
   });
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    navigate({ to: "/produtos", search: { q: q || undefined, cat: undefined } });
-  }
+
 
   const nav = (
     <>

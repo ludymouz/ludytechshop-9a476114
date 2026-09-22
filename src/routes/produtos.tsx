@@ -47,14 +47,19 @@ function Produtos() {
   const { data: produtos, isLoading } = useQuery(produtosQuery);
   const { isFavorito, toggle } = useFavoritos();
   const [ordem, setOrdem] = React.useState("newest");
+  const [termo, setTermo] = React.useState(q ?? "");
+
+  React.useEffect(() => {
+    setTermo(q ?? "");
+  }, [q]);
 
   const categoria = (categorias ?? []).find((c) => c.slug === cat);
 
   const lista = React.useMemo(() => {
     let out = [...(produtos ?? [])];
     if (categoria) out = out.filter((p) => p.categoria_id === categoria.id);
-    if (q) {
-      const needle = q.toLowerCase();
+    if (termo.trim()) {
+      const needle = termo.trim().toLowerCase();
       out = out.filter(
         (p) =>
           p.nome.toLowerCase().includes(needle) ||

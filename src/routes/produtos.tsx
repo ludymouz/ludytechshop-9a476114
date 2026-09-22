@@ -1,9 +1,11 @@
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Search, X } from "lucide-react";
 
 import { ShopLayout } from "@/components/shop/ShopLayout";
 import { ProductCard } from "@/components/shop/ProductCard";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,

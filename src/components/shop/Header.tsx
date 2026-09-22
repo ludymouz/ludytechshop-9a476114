@@ -92,16 +92,7 @@ export function Header() {
           </span>
         </Link>
 
-        <form onSubmit={submit} className="relative mx-auto hidden w-full max-w-md md:block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={t("search_ph")}
-            className="rounded-full pl-9"
-            aria-label={t("search")}
-          />
-        </form>
+        <SearchBox className="mx-auto hidden w-full max-w-md md:block" />
 
         <div className="ml-auto flex items-center gap-0.5">
           <Button

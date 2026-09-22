@@ -1,10 +1,9 @@
 import * as React from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Heart, LogOut, Menu, Search, ShoppingCart, User } from "lucide-react";
+import { Heart, LogOut, Menu, ShoppingCart, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,

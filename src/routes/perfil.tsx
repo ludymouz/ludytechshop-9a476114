@@ -1,7 +1,8 @@
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Printer } from "lucide-react";
+import { printReceipt } from "@/lib/receipt";
 import { toast } from "sonner";
 
 import { ShopLayout } from "@/components/shop/ShopLayout";
@@ -334,14 +335,24 @@ function Perfil() {
                   </p>
                 </div>
 
-                {p.comprovativo_url && (
-                  <Button asChild size="sm" variant="outline" className="mt-3">
-                    <a href={p.comprovativo_url} target="_blank" rel="noreferrer">
-                      <ExternalLink className="size-4" />
-                      {lang === "pt" ? "Ver comprovativo enviado" : "View uploaded receipt"}
-                    </a>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {p.comprovativo_url && (
+                    <Button asChild size="sm" variant="outline">
+                      <a href={p.comprovativo_url} target="_blank" rel="noreferrer">
+                        <ExternalLink className="size-4" />
+                        {lang === "pt" ? "Ver comprovativo enviado" : "View uploaded receipt"}
+                      </a>
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => printReceipt({ ...p, itens: p.pedido_itens ?? [] })}
+                  >
+                    <Printer className="size-4" />
+                    {lang === "pt" ? "Imprimir / Descarregar recibo" : "Print / Download receipt"}
                   </Button>
-                )}
+                </div>
               </article>
             ))}
           </TabsContent>

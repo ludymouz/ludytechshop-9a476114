@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth";
 import { PAYMENT_METHODS, SHOP, formatKz, paymentWindow, requiresProof } from "@/lib/shop-config";
 import { criarPedido, enviarComprovativo } from "@/lib/checkout.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { printReceipt } from "@/lib/receipt";
 
 export function CartDrawer() {
   const { items, subtotal, open, setOpen, setQty, remove, clear } = useCart();
@@ -134,10 +135,30 @@ export function CartDrawer() {
           ? `Comprovativo: ${window.location.origin}${comprovativoUrl}\n`
           : "");
 
+      const recibo = {
+        numero: res.numero,
+        nome_cliente: perfil?.nome_completo || user.email || "Cliente",
+        telefone: perfil?.telefone ?? null,
+        morada: entrega === "entrega" ? (perfil?.morada ?? null) : null,
+        localizacao_url: entrega === "entrega" ? localizacaoUrl : null,
+        metodo_pag: pagamento,
+        tipo_entrega: entrega,
+        estado: "Pendente",
+        subtotal: res.subtotal,
+        taxa_entrega: res.taxa,
+        total: res.total,
+        itens: items.map((i) => ({ nome: i.nome, quantidade: i.quantidade, preco: i.preco })),
+      };
       clear();
       setComprovativoUrl(null);
       setOpen(false);
-      toast.success(lang === "pt" ? `Pedido #${res.numero} registado!` : `Order #${res.numero} placed!`);
+      toast.success(lang === "pt" ? `Pedido #${res.numero} registado!` : `Order #${res.numero} placed!`, {
+        duration: 15000,
+        action: {
+          label: lang === "pt" ? "Imprimir recibo" : "Print receipt",
+          onClick: () => printReceipt(recibo),
+        },
+      });
       window.open(`https://wa.me/${SHOP.phone}?text=${encodeURIComponent(texto)}`, "_blank");
       navigate({ to: "/perfil" });
     } catch (e) {

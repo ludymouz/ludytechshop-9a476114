@@ -11,7 +11,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ExternalLink, LogOut, MessageCircle, Paperclip, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, LogOut, MessageCircle, Paperclip, Plus, Printer, Trash2 } from "lucide-react";
+import { printReceipt } from "@/lib/receipt";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -666,6 +667,13 @@ function Pedidos() {
                 </a>
               </Button>
             )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => printReceipt({ ...p, itens: p.pedido_itens ?? [] })}
+            >
+              <Printer className="size-4" /> Imprimir recibo
+            </Button>
           </div>
 
           {p.telefone && (

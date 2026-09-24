@@ -1,7 +1,7 @@
 import * as React from "react";
 import { createFileRoute, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowLeft, Heart, Minus, Plus, ShoppingCart, Star } from "lucide-react";
+import { ArrowDown, ArrowLeft, Heart, MessageCircle, Minus, Plus, ShoppingCart, Star } from "lucide-react";
 import { toast } from "sonner";
 
 import { ShopLayout } from "@/components/shop/ShopLayout";
@@ -15,7 +15,7 @@ import { useCart } from "@/lib/cart";
 import { useFavoritos } from "@/lib/favoritos";
 import { useI18n } from "@/lib/i18n";
 import { avaliacoesQuery, produtoQuery } from "@/lib/shop-queries";
-import { effectivePrice, formatKz } from "@/lib/shop-config";
+import { SHOP, effectivePrice, formatKz } from "@/lib/shop-config";
 
 export const Route = createFileRoute("/produto/$id")({
   head: () => ({
@@ -272,6 +272,19 @@ function ProdutoDetalhe() {
               >
                 <ShoppingCart className="size-4 shrink-0" />
                 <span className="truncate">{t("add_cart")}</span>
+              </Button>
+
+              <Button asChild size="lg" variant="secondary" className="font-semibold">
+                <a
+                  target="_blank"
+                  rel="noreferrer"
+                  href={`https://wa.me/${SHOP.phone}?text=${encodeURIComponent(
+                    `Olá, Ludy Tech Shop! Tenho interesse em comprar este produto:\n- Produto: ${produto.nome}\n- Preço: ${formatKz(preco)}\n- Link: ${typeof window !== "undefined" ? window.location.href : ""}\nPodem confirmar a disponibilidade para entrega?`,
+                  )}`}
+                >
+                  <MessageCircle className="size-4 shrink-0" />
+                  Comprar via WhatsApp
+                </a>
               </Button>
 
               <Button size="lg" variant="outline" onClick={() => toggle(produto.id)}>

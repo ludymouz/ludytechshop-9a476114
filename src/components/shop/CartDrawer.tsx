@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Loader2, LocateFixed, Minus, Paperclip, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import { CheckCircle2, Loader2, LocateFixed, MessageCircle, Minus, Paperclip, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,25 @@ export function CartDrawer() {
 
   const taxa = entrega === "entrega" ? SHOP.deliveryFee : 0;
   const total = subtotal + taxa;
+
+  function comprarViaWhatsApp() {
+    const linhas = items
+      .map((i) => `• ${i.quantidade}x ${i.nome} — ${formatKz(i.preco * i.quantidade)}`)
+      .join("\n");
+    const texto =
+      `*${SHOP.name}*\n` +
+      (lang === "pt"
+        ? "Olá! Quero finalizar a minha encomenda com estes produtos do carrinho:\n\n"
+        : "Hello! I'd like to place my order with these cart items:\n\n") +
+      `${linhas}\n\n` +
+      `${t("subtotal")}: ${formatKz(subtotal)}\n` +
+      `${t("del_fee")}: ${entrega === "entrega" ? formatKz(taxa) : formatKz(0)}\n` +
+      `*${t("total")}: ${formatKz(total)}*\n\n` +
+      (lang === "pt"
+        ? "Podem confirmar a disponibilidade e ajudar-me a concluir a encomenda? Obrigado!"
+        : "Can you confirm availability and help me complete the order? Thank you!");
+    window.open(`https://wa.me/${SHOP.phone}?text=${encodeURIComponent(texto)}`, "_blank");
+  }
 
   function obterLocalizacao() {
     if (!("geolocation" in navigator)) {
@@ -366,6 +385,16 @@ export function CartDrawer() {
               </p>
             )}
 
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full font-semibold"
+              size="lg"
+              onClick={comprarViaWhatsApp}
+            >
+              <MessageCircle className="size-4 shrink-0" />
+              {lang === "pt" ? "Comprar carrinho via WhatsApp" : "Buy cart via WhatsApp"}
+            </Button>
             <Button
               className="w-full font-semibold"
               size="lg"

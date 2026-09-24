@@ -5,6 +5,7 @@ import { ArrowDown, ArrowLeft, Heart, MessageCircle, Minus, Plus, ShoppingCart, 
 import { toast } from "sonner";
 
 import { ShopLayout } from "@/components/shop/ShopLayout";
+import { ProductCard } from "@/components/shop/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,7 +15,7 @@ import { useAuth } from "@/lib/auth";
 import { useCart } from "@/lib/cart";
 import { useFavoritos } from "@/lib/favoritos";
 import { useI18n } from "@/lib/i18n";
-import { avaliacoesQuery, produtoQuery } from "@/lib/shop-queries";
+import { avaliacoesQuery, produtoQuery, produtosQuery } from "@/lib/shop-queries";
 import { SHOP, effectivePrice, formatKz } from "@/lib/shop-config";
 
 export const Route = createFileRoute("/produto/$id")({
@@ -63,6 +64,7 @@ function ProdutoDetalhe() {
 
   const { data: produto, isLoading } = useQuery(produtoQuery(id));
   const { data: avaliacoes } = useQuery(avaliacoesQuery(id));
+  const { data: todosProdutos } = useQuery(produtosQuery);
   const [qty, setQty] = React.useState(1);
   const [estrelas, setEstrelas] = React.useState(5);
   const [comentario, setComentario] = React.useState("");
@@ -130,6 +132,9 @@ function ProdutoDetalhe() {
   const preco = effectivePrice(produto);
   const esgotado = produto.stock <= 0;
   const lista = avaliacoes ?? [];
+  const relacionados = (todosProdutos ?? [])
+    .filter((p) => p.id !== produto.id && p.categoria_id === produto.categoria_id)
+    .slice(0, 8);
   const media = lista.length > 0 ? lista.reduce((s, a) => s + a.estrelas, 0) / lista.length : 0;
 
   function irParaDescricao() {
@@ -377,6 +382,22 @@ function ProdutoDetalhe() {
             </TabsContent>
           </Tabs>
         </div>
+
+        {relacionados.length > 0 && (
+          <section className="mt-16">
+            <h2 className="font-display text-xl font-black sm:text-2xl">
+              {lang === "pt" ? "Produtos da mesma categoria" : "Products from the same category"}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {lang === "pt" ? "Também te podem interessar:" : "You may also like:"}
+            </p>
+            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {relacionados.map((p) => (
+                <ProductCard key={p.id} produto={p} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </ShopLayout>
   );

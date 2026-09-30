@@ -39,10 +39,23 @@ function NotFoundComponent() {
   );
 }
 
+const CHUNK_ERROR_RE = /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i;
+
+function reloadOnceForStaleChunk(): boolean {
+  if (typeof window === "undefined") return false;
+  const key = "ludy-chunk-reload";
+  const last = Number(sessionStorage.getItem(key) ?? 0);
+  if (Date.now() - last < 10000) return false;
+  sessionStorage.setItem(key, String(Date.now()));
+  window.location.reload();
+  return true;
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
+    if (CHUNK_ERROR_RE.test(error?.message ?? "") && reloadOnceForStaleChunk()) return;
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
@@ -134,6 +147,14 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    const onPreloadError = (e: Event) => {
+      if (reloadOnceForStaleChunk()) e.preventDefault();
+    };
+    window.addEventListener("vite:preloadError", onPreloadError);
+    return () => window.removeEventListener("vite:preloadError", onPreloadError);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

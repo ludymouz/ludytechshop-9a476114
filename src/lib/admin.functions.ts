@@ -208,6 +208,11 @@ export const adminUpdatePedido = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await guard();
     const db = await admin();
+    const { data: atual } = await db
+      .from("pedidos")
+      .select("estado")
+      .eq("id", data.id)
+      .single();
     const { data: pedido, error } = await db
       .from("pedidos")
       .update({ estado: data.estado })
@@ -215,6 +220,30 @@ export const adminUpdatePedido = createServerFn({ method: "POST" })
       .select("user_id, numero")
       .single();
     if (error) throw new Error(error.message);
+
+    // Cancelar devolve o stock; reativar um pedido cancelado volta a descontá-lo.
+    const antes = atual?.estado;
+    const cancelando = data.estado === "Cancelado" && antes !== "Cancelado";
+    const reativando = antes === "Cancelado" && data.estado !== "Cancelado";
+    if (cancelando || reativando) {
+      const { data: itens } = await db
+        .from("pedido_itens")
+        .select("produto_id, quantidade")
+        .eq("pedido_id", data.id);
+      for (const it of itens ?? []) {
+        if (!it.produto_id) continue;
+        const { data: prod } = await db
+          .from("produtos")
+          .select("stock")
+          .eq("id", it.produto_id)
+          .single();
+        if (!prod) continue;
+        const novo = cancelando
+          ? prod.stock + it.quantidade
+          : Math.max(prod.stock - it.quantidade, 0);
+        await db.from("produtos").update({ stock: novo }).eq("id", it.produto_id);
+      }
+    }
     if (pedido?.user_id) {
       await db.from("notificacoes").insert({
         user_id: pedido.user_id,
